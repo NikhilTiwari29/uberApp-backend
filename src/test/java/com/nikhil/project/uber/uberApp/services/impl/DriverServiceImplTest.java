@@ -9,6 +9,7 @@ import com.nikhil.project.uber.uberApp.entities.enums.RideRequestStatus;
 import com.nikhil.project.uber.uberApp.entities.enums.RideStatus;
 import com.nikhil.project.uber.uberApp.entities.enums.Role;
 import com.nikhil.project.uber.uberApp.exceptions.ResourceNotFoundException;
+import com.nikhil.project.uber.uberApp.exceptions.RuntimeConflictException;
 import com.nikhil.project.uber.uberApp.repositories.DriverRepository;
 import com.nikhil.project.uber.uberApp.services.PaymentService;
 import com.nikhil.project.uber.uberApp.services.RatingService;
@@ -85,8 +86,9 @@ class DriverServiceImplTest {
         RideRequest rideRequest = rideRequest(1L, rider, RideRequestStatus.PENDING);
         Ride ride = ride(10L, rider, currentDriver, RideStatus.CONFIRMED);
 
+        when(driverRepository.findByUserForUpdate(driverUser)).thenReturn(Optional.of(currentDriver));
+        doNothing().when(rideRequestService).confirmPendingRideRequest(rideRequest.getId());
         when(rideRequestService.findRideRequestById(rideRequest.getId())).thenReturn(rideRequest);
-        when(driverRepository.findByUser(driverUser)).thenReturn(Optional.of(currentDriver));
         when(driverRepository.save(currentDriver)).thenReturn(currentDriver);
         when(rideService.createNewRide(rideRequest, currentDriver)).thenReturn(ride);
 
@@ -94,13 +96,16 @@ class DriverServiceImplTest {
 
         assertThat(rideDto.getId()).isEqualTo(10L);
         assertThat(currentDriver.getAvailable()).isFalse();
+        verify(rideRequestService).confirmPendingRideRequest(rideRequest.getId());
         verify(rideService).createNewRide(rideRequest, currentDriver);
     }
 
     @Test
     void acceptRide_whenRequestNotPending_throwsRuntimeException() {
         RideRequest rideRequest = rideRequest(1L, rider, RideRequestStatus.CONFIRMED);
-        when(rideRequestService.findRideRequestById(rideRequest.getId())).thenReturn(rideRequest);
+        when(driverRepository.findByUserForUpdate(driverUser)).thenReturn(Optional.of(currentDriver));
+        doThrow(new RuntimeConflictException("RideRequest cannot be accepted because it is no longer pending"))
+                .when(rideRequestService).confirmPendingRideRequest(rideRequest.getId());
 
         assertThrows(RuntimeException.class, () -> driverService.acceptRide(rideRequest.getId()));
     }
@@ -110,8 +115,7 @@ class DriverServiceImplTest {
         RideRequest rideRequest = rideRequest(1L, rider, RideRequestStatus.PENDING);
         currentDriver.setAvailable(false);
 
-        when(rideRequestService.findRideRequestById(rideRequest.getId())).thenReturn(rideRequest);
-        when(driverRepository.findByUser(driverUser)).thenReturn(Optional.of(currentDriver));
+        when(driverRepository.findByUserForUpdate(driverUser)).thenReturn(Optional.of(currentDriver));
 
         assertThrows(RuntimeException.class, () -> driverService.acceptRide(rideRequest.getId()));
     }

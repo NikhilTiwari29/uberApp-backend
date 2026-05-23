@@ -1,0 +1,31 @@
+package com.nikhil.project.uber.uberApp.dto;
+
+import com.nikhil.project.uber.uberApp.entities.enums.TransactionMethod;
+import com.nikhil.project.uber.uberApp.entities.enums.TransactionType;
+import lombok.Builder;
+import lombok.Data;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+@Data
+@Builder
+public class WalletTransactionDto {
+
+    private Long id;
+
+    private BigDecimal amount;
+
+    private TransactionType transactionType;
+
+    private TransactionMethod transactionMethod;
+
+    private RideDto ride;
+
+    private String transactionId;
+
+    private WalletDto wallet;
+
+    private LocalDateTime timeStamp;
+
+}

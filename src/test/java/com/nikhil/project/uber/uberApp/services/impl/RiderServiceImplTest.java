@@ -34,6 +34,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -102,7 +103,7 @@ class RiderServiceImplTest {
 
         when(riderRepository.findByUser(riderUser)).thenReturn(Optional.of(currentRider));
         when(rideStrategyManager.rideFareCalculationStrategy()).thenReturn(rideFareCalculationStrategy);
-        when(rideFareCalculationStrategy.calculateFare(any(RideRequest.class))).thenReturn(180.0);
+        when(rideFareCalculationStrategy.calculateFare(any(RideRequest.class))).thenReturn(BigDecimal.valueOf(180.00));
         when(rideStrategyManager.driverMatchingStrategy(currentRider.getRating())).thenReturn(driverMatchingStrategy);
         when(driverMatchingStrategy.findMatchingDriver(any(RideRequest.class))).thenReturn(List.of(
                 driver(1L, user(2L, "driver@test.com", Role.DRIVER), true)
@@ -116,7 +117,7 @@ class RiderServiceImplTest {
         RideRequestDto savedRequest = riderService.requestRide(rideRequestDto);
 
         assertThat(savedRequest.getId()).isEqualTo(20L);
-        assertThat(savedRequest.getFare()).isEqualTo(180.0);
+        assertThat(savedRequest.getFare()).isEqualByComparingTo(BigDecimal.valueOf(180.00));
         assertThat(savedRequest.getRideRequestStatus()).isEqualTo(RideRequestStatus.PENDING);
 
         ArgumentCaptor<RideRequest> captor = ArgumentCaptor.forClass(RideRequest.class);

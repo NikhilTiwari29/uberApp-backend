@@ -19,6 +19,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 
 import static com.nikhil.project.uber.uberApp.TestDataFactory.*;
@@ -46,16 +47,16 @@ class WalletServiceImplTest {
         Ride ride = ride(1L, rider(1L, user), driver(1L, user(2L, "driver@test.com", Role.DRIVER), true),
                 RideStatus.ENDED);
 
-        when(walletRepository.findByUser(user)).thenReturn(Optional.of(wallet));
+        when(walletRepository.findByUserForUpdate(user)).thenReturn(Optional.of(wallet));
         when(walletRepository.save(wallet)).thenReturn(wallet);
 
-        Wallet savedWallet = walletService.addMoneyToWallet(user, 25.0, "txn-1", ride, TransactionMethod.BANKING);
+        Wallet savedWallet = walletService.addMoneyToWallet(user, BigDecimal.valueOf(25.00), "txn-1", ride, TransactionMethod.BANKING);
 
-        assertThat(savedWallet.getBalance()).isEqualTo(75.0);
+        assertThat(savedWallet.getBalance()).isEqualByComparingTo(BigDecimal.valueOf(75.00));
         ArgumentCaptor<WalletTransaction> captor = ArgumentCaptor.forClass(WalletTransaction.class);
         verify(walletTransactionService).createNewWalletTransaction(captor.capture());
         assertThat(captor.getValue().getTransactionType()).isEqualTo(TransactionType.CREDIT);
-        assertThat(captor.getValue().getAmount()).isEqualTo(25.0);
+        assertThat(captor.getValue().getAmount()).isEqualByComparingTo(BigDecimal.valueOf(25.00));
         assertThat(captor.getValue().getTransactionId()).isEqualTo("txn-1");
     }
 
@@ -66,26 +67,26 @@ class WalletServiceImplTest {
         Ride ride = ride(1L, rider(1L, user), driver(1L, user(2L, "driver@test.com", Role.DRIVER), true),
                 RideStatus.ENDED);
 
-        when(walletRepository.findByUser(user)).thenReturn(Optional.of(wallet));
+        when(walletRepository.findByUserForUpdate(user)).thenReturn(Optional.of(wallet));
         when(walletRepository.save(wallet)).thenReturn(wallet);
 
-        Wallet savedWallet = walletService.deductMoneyFromWallet(user, 40.0, "txn-2", ride, TransactionMethod.RIDE);
+        Wallet savedWallet = walletService.deductMoneyFromWallet(user, BigDecimal.valueOf(40.00), "txn-2", ride, TransactionMethod.RIDE);
 
-        assertThat(savedWallet.getBalance()).isEqualTo(60.0);
+        assertThat(savedWallet.getBalance()).isEqualByComparingTo(BigDecimal.valueOf(60.00));
         ArgumentCaptor<WalletTransaction> captor = ArgumentCaptor.forClass(WalletTransaction.class);
         verify(walletTransactionService).createNewWalletTransaction(captor.capture());
         assertThat(captor.getValue().getTransactionType()).isEqualTo(TransactionType.DEBIT);
-        assertThat(captor.getValue().getAmount()).isEqualTo(40.0);
+        assertThat(captor.getValue().getAmount()).isEqualByComparingTo(BigDecimal.valueOf(40.00));
     }
 
     @Test
     void deductMoneyFromWallet_whenBalanceInsufficient_throwsConflict() {
         User user = user(1L, "rider@test.com", Role.RIDER);
         Wallet wallet = wallet(1L, user, 10.0);
-        when(walletRepository.findByUser(user)).thenReturn(Optional.of(wallet));
+        when(walletRepository.findByUserForUpdate(user)).thenReturn(Optional.of(wallet));
 
         assertThrows(RuntimeConflictException.class,
-                () -> walletService.deductMoneyFromWallet(user, 20.0, null, null, TransactionMethod.RIDE));
+                () -> walletService.deductMoneyFromWallet(user, BigDecimal.valueOf(20.00), null, null, TransactionMethod.RIDE));
 
         verify(walletRepository, never()).save(any());
         verifyNoInteractions(walletTransactionService);
@@ -96,9 +97,9 @@ class WalletServiceImplTest {
         User user = user(1L, "rider@test.com", Role.RIDER);
 
         assertThrows(RuntimeConflictException.class,
-                () -> walletService.addMoneyToWallet(user, 0.0, null, null, TransactionMethod.RIDE));
+                () -> walletService.addMoneyToWallet(user, BigDecimal.ZERO, null, null, TransactionMethod.RIDE));
         assertThrows(RuntimeConflictException.class,
-                () -> walletService.deductMoneyFromWallet(user, -1.0, null, null, TransactionMethod.RIDE));
+                () -> walletService.deductMoneyFromWallet(user, BigDecimal.valueOf(-1.00), null, null, TransactionMethod.RIDE));
 
         verifyNoInteractions(walletRepository, walletTransactionService);
     }
@@ -118,6 +119,6 @@ class WalletServiceImplTest {
         Wallet wallet = walletService.createNewWallet(user);
 
         assertThat(wallet.getUser()).isEqualTo(user);
-        assertThat(wallet.getBalance()).isEqualTo(0.0);
+        assertThat(wallet.getBalance()).isEqualByComparingTo(BigDecimal.ZERO);
     }
 }

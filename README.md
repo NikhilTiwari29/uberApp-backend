@@ -229,10 +229,8 @@ The code still separates responsibilities so the project is not a single unstruc
 ## Known Limitations And Future Improvements
 
 - Package by business capability instead of only technical layers.
-- Use `BigDecimal` instead of `Double` for money values.
-- Add optimistic or pessimistic locking for concurrent ride acceptance and wallet updates.
-- Replace local date/time surge logic with a configurable pricing policy.
 - Add database migrations using Flyway or Liquibase.
+- Replace local date/time surge logic with a configurable pricing policy.
 - Improve production readiness with structured logging, tracing, and stronger monitoring.
 - Add more end-to-end API tests with Docker/PostGIS.
 - Implement or remove currently unused wallet withdrawal behavior.

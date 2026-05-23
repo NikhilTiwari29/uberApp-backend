@@ -64,10 +64,10 @@ class RideServiceImplTest {
     }
 
     @Test
-    void createNewRide_confirmsRequestAndCreatesRideWithOtp() {
+    void createNewRide_createsConfirmedRideWithOtp() {
         Rider rider = rider(1L, user(1L, "rider@test.com", Role.RIDER));
         Driver driver = driver(1L, user(2L, "driver@test.com", Role.DRIVER), true);
-        RideRequest rideRequest = rideRequest(5L, rider, RideRequestStatus.PENDING);
+        RideRequest rideRequest = rideRequest(5L, rider, RideRequestStatus.CONFIRMED);
         AtomicReference<Long> idBeforeSave = new AtomicReference<>();
 
         when(rideRepository.save(any(Ride.class))).thenAnswer(invocation -> {
@@ -84,7 +84,6 @@ class RideServiceImplTest {
         assertThat(ride.getRideStatus()).isEqualTo(RideStatus.CONFIRMED);
         assertThat(ride.getDriver()).isEqualTo(driver);
         assertThat(ride.getOtp()).matches("\\d{4}");
-        verify(rideRequestService).update(rideRequest);
 
         ArgumentCaptor<Ride> captor = ArgumentCaptor.forClass(Ride.class);
         verify(rideRepository).save(captor.capture());

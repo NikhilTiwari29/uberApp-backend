@@ -17,6 +17,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 
 import static com.nikhil.project.uber.uberApp.TestDataFactory.*;
@@ -68,14 +69,14 @@ class PaymentServiceImplTest {
         Ride ride = ride(1L, rider(1L, user(1L, "rider@test.com", Role.RIDER)),
                 driver(1L, user(2L, "driver@test.com", Role.DRIVER), true), RideStatus.ONGOING);
         ride.setPaymentMethod(PaymentMethod.CASH);
-        ride.setFare(250.0);
+        ride.setFare(BigDecimal.valueOf(250.00));
         when(paymentRepository.save(any(Payment.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         Payment payment = paymentService.createNewPayment(ride);
 
         assertThat(payment.getRide()).isEqualTo(ride);
         assertThat(payment.getPaymentMethod()).isEqualTo(PaymentMethod.CASH);
-        assertThat(payment.getAmount()).isEqualTo(250.0);
+        assertThat(payment.getAmount()).isEqualByComparingTo(BigDecimal.valueOf(250.00));
         assertThat(payment.getPaymentStatus()).isEqualTo(PaymentStatus.PENDING);
     }
 

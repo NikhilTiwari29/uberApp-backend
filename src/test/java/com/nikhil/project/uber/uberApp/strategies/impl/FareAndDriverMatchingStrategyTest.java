@@ -8,6 +8,7 @@ import com.nikhil.project.uber.uberApp.repositories.DriverRepository;
 import com.nikhil.project.uber.uberApp.services.DistanceService;
 import org.junit.jupiter.api.Test;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import static com.nikhil.project.uber.uberApp.TestDataFactory.*;
@@ -24,7 +25,7 @@ class FareAndDriverMatchingStrategyTest {
                 RideRequestStatus.PENDING);
         when(distanceService.calculateDistance(null, null)).thenReturn(12.5);
 
-        assertThat(strategy.calculateFare(rideRequest)).isEqualTo(125.0);
+        assertThat(strategy.calculateFare(rideRequest)).isEqualByComparingTo(BigDecimal.valueOf(125.00));
     }
 
     @Test
@@ -35,7 +36,7 @@ class FareAndDriverMatchingStrategyTest {
                 RideRequestStatus.PENDING);
         when(distanceService.calculateDistance(null, null)).thenReturn(10.0);
 
-        assertThat(strategy.calculateFare(rideRequest)).isEqualTo(200.0);
+        assertThat(strategy.calculateFare(rideRequest)).isEqualByComparingTo(BigDecimal.valueOf(200.00));
     }
 
     @Test

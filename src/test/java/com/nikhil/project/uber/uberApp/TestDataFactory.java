@@ -3,6 +3,7 @@ package com.nikhil.project.uber.uberApp;
 import com.nikhil.project.uber.uberApp.entities.*;
 import com.nikhil.project.uber.uberApp.entities.enums.*;
 
+import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -45,7 +46,7 @@ public final class TestDataFactory {
         rideRequest.setRider(rider);
         rideRequest.setRideRequestStatus(status);
         rideRequest.setPaymentMethod(PaymentMethod.WALLET);
-        rideRequest.setFare(100.0);
+        rideRequest.setFare(BigDecimal.valueOf(100.00));
         return rideRequest;
     }
 
@@ -56,7 +57,7 @@ public final class TestDataFactory {
         ride.setDriver(driver);
         ride.setRideStatus(status);
         ride.setPaymentMethod(PaymentMethod.WALLET);
-        ride.setFare(100.0);
+        ride.setFare(BigDecimal.valueOf(100.00));
         ride.setOtp("1234");
         return ride;
     }
@@ -75,7 +76,7 @@ public final class TestDataFactory {
         Wallet wallet = new Wallet();
         wallet.setId(id);
         wallet.setUser(user);
-        wallet.setBalance(balance);
+        wallet.setBalance(BigDecimal.valueOf(balance));
         return wallet;
     }
 
