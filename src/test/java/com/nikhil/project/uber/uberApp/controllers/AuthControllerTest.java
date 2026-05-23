@@ -5,8 +5,10 @@ import com.nikhil.project.uber.uberApp.dto.OnboardDriverDto;
 import com.nikhil.project.uber.uberApp.dto.SignupDto;
 import com.nikhil.project.uber.uberApp.entities.User;
 import com.nikhil.project.uber.uberApp.entities.enums.Role;
+import com.nikhil.project.uber.uberApp.repositories.DriverRepository;
 import com.nikhil.project.uber.uberApp.repositories.RiderRepository;
 import com.nikhil.project.uber.uberApp.repositories.UserRepository;
+import com.nikhil.project.uber.uberApp.security.JWTService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +19,10 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 
+import java.util.HashSet;
 import java.util.Set;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @AutoConfigureWebTestClient(timeout = "100000")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -34,15 +39,20 @@ class AuthControllerTest {
     @Autowired
     private RiderRepository riderRepository;
 
+    @Autowired
+    private DriverRepository driverRepository;
+
+    @Autowired
+    private JWTService jwtService;
+
     private User user;
 
     @BeforeEach
     void setUpEach() {
         user = new User();
-        user.setId(1L);
         user.setEmail("test@example.com");
         user.setPassword("password");
-        user.setRoles(Set.of(Role.RIDER));
+        user.setRoles(new HashSet<>(Set.of(Role.RIDER)));
     }
 
     @Test
@@ -62,22 +72,33 @@ class AuthControllerTest {
                 .jsonPath("$.data.name").isEqualTo(signupDto.getName());
     }
 
-//    @Test
-//    @WithUserDetails("admin@gmail.com")
+    @Test
     void testOnboardDriver_success() {
+        User admin = new User();
+        admin.setEmail("admin@example.com");
+        admin.setName("Admin User");
+        admin.setPassword("password");
+        admin.setRoles(new HashSet<>(Set.of(Role.ADMIN)));
+        User savedAdmin = userRepository.save(admin);
 
-        if (!userRepository.existsById(1L)) {
-            userRepository.save(user);
-        }
+        user.setEmail("new-driver@example.com");
+        User savedUser = userRepository.save(user);
 
         OnboardDriverDto onboardDriverDto = new OnboardDriverDto();
         onboardDriverDto.setVehicleId("ABC123");
 
         webTestClient
                 .post()
-                .uri("/auth/onBoardNewDriver/1")
+                .uri("/auth/onBoardNewDriver/{userId}", savedUser.getId())
+                .header("Authorization", "Bearer " + jwtService.generateAccessToken(savedAdmin))
                 .bodyValue(onboardDriverDto)
                 .exchange()
-                .expectStatus().isCreated();
+                .expectStatus().isCreated()
+                .expectBody()
+                .jsonPath("$.data.vehicleId").isEqualTo("ABC123");
+
+        User onboardedUser = userRepository.findById(savedUser.getId()).orElseThrow();
+        assertThat(onboardedUser.getRoles()).contains(Role.DRIVER);
+        assertThat(driverRepository.findByUser(onboardedUser)).isPresent();
     }
 }
